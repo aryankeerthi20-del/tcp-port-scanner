@@ -17,3 +17,9 @@ python scanner.py -t target.com -m custom -c "22 80 443"
 \```
 ##LEGAL TERMS
 -only scan system you own or have permission for doing so.
+
+## Usage
+
+```bash
+python3 main.py
+```
