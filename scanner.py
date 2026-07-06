@@ -1,6 +1,7 @@
 import socket
 import argparse
 import sys
+import csv
 from concurrent.futures import ThreadPoolExecutor
 import time
 import requests
@@ -110,3 +111,12 @@ z=input("Enter whether jsn report is required: ")
 if z=="Yes" or z=="yes" or z=="y":
      with open("report.json", "w") as f:
         json.dump(report, f, indent=4)
+x=input("Enter whethe csv report is required: ")
+
+if x=="Yes" or x=="yes" or x=="y":
+    
+    with open("report.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["port", "banner", "cves"])
+        for entry in open_ports:
+            writer.writerow([entry["port"], entry["banner"], ", ".join(entry["cves"])])
