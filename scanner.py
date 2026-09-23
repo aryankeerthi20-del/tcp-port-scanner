@@ -23,26 +23,39 @@ def portscanner(ip,i):
             return "Time out",""
         else:
             return "open" , banner
-def cve_lookup(banner):
-    cves = []
-    if not banner or banner == "no banner":
+def cve_lookup(banner: str, api_key: str = None) -> list:
+    if not banner or banner.strip().lower() == "no banner":
         return []
     try:
-        version = banner.split("_")[1].split(" ")[0].split("p")[0]
-        service = banner.split("_")[0].split("-")[-1]
-        search_term = service
-    except IndexError:
+        parts = banner.split("_")
+        service_part = parts[0]
+        service = service_part.split("-")[0].lower()
+        raw_version = service_part.split("-")[-1]
+        version = raw_version.split("p")[0]
+    except (IndexError, AttributeError):
         return []
-    url = "https://services.nvd.nist.gov/rest/json/cves/2.0"
-    params = {"keywordSearch": search_term, "resultsPerPage": 5}
+    url = "https://nist.gov"
+    cpe_match = f"cpe:2.3:a:*:{service}:{version}"
+
+    params = {
+        "virtualMatchString": cpe_match, 
+        "resultsPerPage": 10
+    }
+    
+    headers = {}
+    if api_key:
+        headers["apiKey"] = api_key
+
     try:
-        response = requests.get(url, params=params, timeout=10)
+        response = requests.get(url, params=params, headers=headers, timeout=5)
+        if response.status_code != 200:
+            return []
+            
         data = response.json()
-        for item in data["vulnerabilities"]:
-            cves.append(item["cve"]["id"])
-    except Exception:
+        return [item["cve"]["id"] for item in data.get("vulnerabilities", [])]
+        
+    except (requests.RequestException, KeyError, ValueError):
         return []
-    return cves
 parser = argparse.ArgumentParser(description="TCP Port Scanner")
 parser.add_argument("-t", "--target", required=True, help="Target IP or hostname")
 parser.add_argument("-m", "--mode", required=True, help="Scan mode: common, full, custom")
